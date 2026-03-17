@@ -3,4 +3,5 @@ __pycache__/
 *.log
 *.pid
 .env
+env.sh
 .DS_Store

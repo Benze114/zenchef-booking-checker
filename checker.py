@@ -5,11 +5,13 @@ Monitors Zenchef for new booking slots and sends macOS notifications.
 """
 
 import json
+import os
 import subprocess
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import date, datetime, timedelta
 
 RESTAURANT_ID = 365906
@@ -23,6 +25,10 @@ PEAK_START = (11, 30)  # 11:30
 PEAK_END = (13, 30)    # 13:30
 GUESTS = 2
 LOOKAHEAD_DAYS = 14
+
+# WhatsApp (CallMeBot) — set here or via env vars CALLMEBOT_PHONE, CALLMEBOT_API_KEY
+CALLMEBOT_PHONE = ""  # e.g. "491234567890" (international format, no +)
+CALLMEBOT_API_KEY = ""  # Get from: send "I allow callmebot to send me messages" to +34 644 71 76 18
 
 
 def get_check_interval_minutes() -> int:
@@ -53,6 +59,25 @@ def speak(text: str):
 def open_url(url: str = BOOKING_URL):
     """Open the booking page in the default browser."""
     subprocess.run(["open", url], capture_output=True)
+
+
+def notify_whatsapp(message: str):
+    """Send WhatsApp via CallMeBot. Set CALLMEBOT_PHONE and CALLMEBOT_API_KEY in script or env."""
+    phone = (CALLMEBOT_PHONE or os.environ.get("CALLMEBOT_PHONE") or "").replace("+", "")
+    apikey = CALLMEBOT_API_KEY or os.environ.get("CALLMEBOT_API_KEY")
+    if not phone or not apikey:
+        return
+    try:
+        text = urllib.parse.quote(message)
+        url = f"https://api.callmebot.com/whatsapp.php?phone={phone}&text={text}&apikey={apikey}"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status == 200:
+                print(f"  [✓] WhatsApp sent")
+            else:
+                print(f"  [!] WhatsApp failed: status {resp.status}")
+    except Exception as e:
+        print(f"  [!] WhatsApp failed: {e}")
 
 
 def fetch_availabilities(date_begin: str, date_end: str) -> list:
@@ -163,6 +188,9 @@ def main():
                 )
                 speak(f"New booking slots available at {RESTAURANT_NAME}!")
                 open_url()
+                notify_whatsapp(
+                    f"OTSUKA: {len(new_slots)} new booking slot(s) available! Book now: {BOOKING_URL}",
+                )
             elif new_slots and first_run:
                 print(f"  Currently available slots (baseline):")
                 print(format_slots(available))

@@ -12,6 +12,7 @@ Built for restaurants with limited seating that release reservations on a rollin
 - Text-to-speech announcement
 - Automatically opens the booking page in your browser
 - Zero dependencies — uses only Python standard library + macOS built-ins
+- Optional: WhatsApp notifications via CallMeBot
 
 ## Usage
 
@@ -35,11 +36,34 @@ Edit the constants at the top of `checker.py`:
 |---|---|---|
 | `RESTAURANT_ID` | `365906` | Zenchef restaurant ID (from the booking URL `rid=` parameter) |
 | `GUESTS` | `2` | Number of guests to search for |
-| `CHECK_INTERVAL_MINUTES` | `15` | Minutes between each check |
+| `CHECK_INTERVAL_MINUTES` | `5` | Minutes between each check (1 min during 11:30–13:30) |
 | `LOOKAHEAD_DAYS` | `14` | How many days ahead to search |
 
 To monitor a different restaurant, find the `rid` value in its Zenchef booking URL:
 `https://bookings.zenchef.com/results?rid=<RESTAURANT_ID>`
+
+### Optional: WhatsApp notifications
+
+Uses [CallMeBot](https://www.callmebot.com/blog/free-api-whatsapp-messages/) (free):
+
+1. Send `I allow callmebot to send me messages` to +34 644 71 76 18 on WhatsApp
+2. You'll receive an API key
+
+**Option A — In the script:** Edit the constants at the top of `checker.py`:
+
+```python
+CALLMEBOT_PHONE = "491234567890"   # Your phone, international format (no +)
+CALLMEBOT_API_KEY = "your-api-key"
+```
+
+**Option B — Separate file:** Create `env.sh` with:
+
+```bash
+export CALLMEBOT_PHONE=491234567890
+export CALLMEBOT_API_KEY=your-api-key
+```
+
+Then run: `source env.sh && python3 checker.py`
 
 ## Requirements
 
