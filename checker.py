@@ -18,8 +18,21 @@ BOOKING_URL = f"https://bookings.zenchef.com/results?rid={RESTAURANT_ID}"
 API_URL = "https://bookings-middleware.zenchef.com/getAvailabilities"
 
 CHECK_INTERVAL_MINUTES = 5
+CHECK_INTERVAL_PEAK_MINUTES = 1  # During release window
+PEAK_START = (11, 30)  # 11:30
+PEAK_END = (13, 30)    # 13:30
 GUESTS = 2
 LOOKAHEAD_DAYS = 14
+
+
+def get_check_interval_minutes() -> int:
+    """Return 1 min during 11:30–13:30 (release window), else 5 min."""
+    now = datetime.now()
+    start = now.replace(hour=PEAK_START[0], minute=PEAK_START[1], second=0, microsecond=0)
+    end = now.replace(hour=PEAK_END[0], minute=PEAK_END[1], second=0, microsecond=0)
+    if start <= now <= end:
+        return CHECK_INTERVAL_PEAK_MINUTES
+    return CHECK_INTERVAL_MINUTES
 
 
 def notify(title: str, message: str, url: str = BOOKING_URL, sound: str = "Hero"):
@@ -115,7 +128,7 @@ def main():
     print(f"  Restaurant ID : {RESTAURANT_ID}")
     print(f"  Guests        : {GUESTS}")
     print(f"  Lookahead     : {LOOKAHEAD_DAYS} days")
-    print(f"  Check interval: every {CHECK_INTERVAL_MINUTES} min")
+    print(f"  Check interval: every {CHECK_INTERVAL_MINUTES} min (every {CHECK_INTERVAL_PEAK_MINUTES} min 11:30–13:30)")
     print(f"  Booking URL   : {BOOKING_URL}")
     print(f"{'=' * 60}")
     print()
@@ -164,12 +177,13 @@ def main():
 
         first_run = False
 
-        next_check = datetime.now() + timedelta(minutes=CHECK_INTERVAL_MINUTES)
-        print(f"  Next check at {next_check.strftime('%H:%M:%S')}")
+        interval = get_check_interval_minutes()
+        next_check = datetime.now() + timedelta(minutes=interval)
+        print(f"  Next check at {next_check.strftime('%H:%M:%S')} (interval: {interval} min)")
         print()
 
         try:
-            time.sleep(CHECK_INTERVAL_MINUTES * 60)
+            time.sleep(interval * 60)
         except KeyboardInterrupt:
             print("\nStopped by user. Goodbye!")
             sys.exit(0)
