@@ -20,7 +20,7 @@ BOOKING_URL = f"https://bookings.zenchef.com/results?rid={RESTAURANT_ID}"
 API_URL = "https://bookings-middleware.zenchef.com/getAvailabilities"
 
 CHECK_INTERVAL_MINUTES = 5
-CHECK_INTERVAL_PEAK_MINUTES = 1  # During release window
+CHECK_INTERVAL_PEAK_MINUTES = 0.5  # During release window
 PEAK_START = (11, 30)  # 11:30
 PEAK_END = (13, 30)    # 13:30
 GUESTS = 2
