@@ -32,12 +32,14 @@ Stop with `Ctrl+C` (foreground) or `kill %1` (background).
 
 Edit the constants at the top of `checker.py`:
 
-| Setting | Default | Description |
-|---|---|---|
-| `RESTAURANT_ID` | `365906` | Zenchef restaurant ID (from the booking URL `rid=` parameter) |
-| `GUESTS` | `2` | Number of guests to search for |
-| `CHECK_INTERVAL_MINUTES` | `5` | Minutes between each check (1 min during 11:30–13:30) |
-| `LOOKAHEAD_DAYS` | `14` | How many days ahead to search |
+
+| Setting                  | Default  | Description                                                   |
+| ------------------------ | -------- | ------------------------------------------------------------- |
+| `RESTAURANT_ID`          | `365906` | Zenchef restaurant ID (from the booking URL `rid=` parameter) |
+| `GUESTS`                 | `2`      | Number of guests to search for                                |
+| `CHECK_INTERVAL_MINUTES` | `5`      | Minutes between each check (1 min during 11:30–13:30)         |
+| `LOOKAHEAD_DAYS`         | `14`     | How many days ahead to search                                 |
+
 
 To monitor a different restaurant, find the `rid` value in its Zenchef booking URL:
 `https://bookings.zenchef.com/results?rid=<RESTAURANT_ID>`

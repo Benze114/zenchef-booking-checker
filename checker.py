@@ -20,7 +20,7 @@ BOOKING_URL = f"https://bookings.zenchef.com/results?rid={RESTAURANT_ID}"
 API_URL = "https://bookings-middleware.zenchef.com/getAvailabilities"
 
 CHECK_INTERVAL_MINUTES = 5
-CHECK_INTERVAL_PEAK_MINUTES = 0.5  # During release window
+CHECK_INTERVAL_PEAK_MINUTES = 0.1  # During release window
 PEAK_START = (11, 30)  # 11:30
 PEAK_END = (13, 30)    # 13:30
 GUESTS = 2
@@ -29,6 +29,28 @@ LOOKAHEAD_DAYS = 14
 # WhatsApp (CallMeBot) — set here or via env vars CALLMEBOT_PHONE, CALLMEBOT_API_KEY
 CALLMEBOT_PHONE = ""  # e.g. "491234567890" (international format, no +)
 CALLMEBOT_API_KEY = ""  # Get from: send "I allow callmebot to send me messages" to +34 644 71 76 18
+
+LOG_FILE = "checker_log.json"
+
+
+def append_log(timestamp: str, available: dict, status: str, new_slots_count: int = 0):
+    """Append a log entry to the JSON log file."""
+    entry = {
+        "timestamp": timestamp,
+        "available": available,
+        "status": status,
+        "new_slots_count": new_slots_count,
+    }
+    try:
+        logs = []
+        if os.path.exists(LOG_FILE):
+            with open(LOG_FILE, "r", encoding="utf-8") as f:
+                logs = json.load(f)
+        logs.append(entry)
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump(logs, f, indent=2, ensure_ascii=False)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"  [!] Log write failed: {e}")
 
 
 def get_check_interval_minutes() -> int:
@@ -107,6 +129,8 @@ def find_available_slots(guests: int) -> dict:
     """
     Returns a dict: { "YYYY-MM-DD": [ {"shift": str, "times": [str]} ] }
     for dates with available slots matching the guest count.
+    Uses possible_guests — the only reliable bookability signal from Zenchef API.
+    When possible_guests is empty, the slot is not bookable (even if occupation suggests capacity).
     """
     today = date.today()
     end = today + timedelta(days=LOOKAHEAD_DAYS)
@@ -181,6 +205,7 @@ def main():
                 print(f"\n  *** NEW SLOTS FOUND! ***")
                 print(format_slots(available))
                 print()
+                append_log(now, available, "new_slots", len(new_slots))
 
                 notify(
                     f"NEW slots at {RESTAURANT_NAME}!",
@@ -195,13 +220,18 @@ def main():
                 print(f"  Currently available slots (baseline):")
                 print(format_slots(available))
                 print()
+                append_log(now, available, "baseline")
             else:
                 print(f"  No new slots (still {len(known_slots)} known).")
+                append_log(now, available, "no_change")
         else:
             print(f"  No available slots found.")
             if not first_run and known_slots:
                 known_slots.clear()
                 print(f"  (Previously known slots cleared — they were taken.)")
+                append_log(now, {}, "slots_cleared")
+            else:
+                append_log(now, {}, "no_slots")
 
         first_run = False
 
