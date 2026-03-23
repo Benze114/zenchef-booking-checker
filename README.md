@@ -8,11 +8,12 @@ Built for restaurants with limited seating that release reservations on a rollin
 
 - Polls the Zenchef availability API at a configurable interval
 - Detects **new** slots (ignores already-known availability)
+- **Auto-booking** — automatically submits a reservation via browser automation (Playwright)
 - macOS native notification with sound
 - Text-to-speech announcement
 - Automatically opens the booking page in your browser
-- Zero dependencies — uses only Python standard library + macOS built-ins
 - Optional: WhatsApp notifications via CallMeBot
+- JSON logging of all check results
 
 ## Usage
 
@@ -67,10 +68,46 @@ export CALLMEBOT_API_KEY=your-api-key
 
 Then run: `source env.sh && python3 checker.py`
 
+### Auto-booking
+
+When `AUTO_BOOK = True` in `checker.py`, the script will automatically attempt to book a slot using Playwright when one becomes available.
+
+Add your booking details to `env.sh`:
+
+```bash
+export BOOKING_FIRSTNAME=YourFirstName
+export BOOKING_LASTNAME=YourLastName
+export BOOKING_EMAIL=your@email.com
+export BOOKING_PHONE=+49123456789
+```
+
+Configure in `checker.py`:
+
+| Setting | Default | Description |
+|---|---|---|
+| `AUTO_BOOK` | `True` | Enable auto-booking |
+| `MIN_BOOKING_DATE` | `2026-03-25` | Only book dates from this date onwards |
+
+Configure in `auto_booker.py`:
+
+| Setting | Default | Description |
+|---|---|---|
+| `PREFERRED_SLOTS` | `["19:00", "19:30", "20:00", ...]` | Time slots in order of preference |
+| `CIVILITY` | `"Herr"` | Salutation (`Frau`, `Herr`, `Mx.`) |
+
+Screenshots of each booking attempt are saved to `screenshots/`.
+
+To test the auto-booker standalone:
+
+```bash
+source env.sh && python3 auto_booker.py 2026-03-25 19:00
+```
+
 ## Requirements
 
-- Python 3.6+
+- Python 3.9+
 - macOS (for notifications, `say`, and `open` commands)
+- Playwright (`pip3 install playwright && python3 -m playwright install chromium`)
 
 ## License
 

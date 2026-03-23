@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 *.log
 checker_log.json
+screenshots/
 *.pid
 .env
 env.sh

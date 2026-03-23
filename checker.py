@@ -25,6 +25,8 @@ PEAK_START = (11, 30)  # 11:30
 PEAK_END = (13, 30)    # 13:30
 GUESTS = 2
 LOOKAHEAD_DAYS = 14
+AUTO_BOOK = True  # Automatically attempt to book when a slot appears
+MIN_BOOKING_DATE = "2026-03-25"  # Only book from next Wednesday onwards
 
 # WhatsApp (CallMeBot) — set here or via env vars CALLMEBOT_PHONE, CALLMEBOT_API_KEY
 CALLMEBOT_PHONE = ""  # e.g. "491234567890" (international format, no +)
@@ -207,20 +209,43 @@ def main():
                 print()
                 append_log(now, available, "new_slots", len(new_slots))
 
+                booked = False
+                if AUTO_BOOK:
+                    try:
+                        from auto_booker import auto_book
+                        booked = auto_book(available, GUESTS, MIN_BOOKING_DATE)
+                        if booked:
+                            append_log(now, available, "auto_booked", len(new_slots))
+                    except Exception as e:
+                        print(f"  [!] Auto-book error: {e}")
+
                 notify(
-                    f"NEW slots at {RESTAURANT_NAME}!",
-                    f"{len(new_slots)} new time slot(s) available — click to book!",
+                    f"{'BOOKED' if booked else 'NEW slots'} at {RESTAURANT_NAME}!",
+                    f"{'Booking submitted!' if booked else f'{len(new_slots)} new slot(s) — click to book!'}",
                 )
-                speak(f"New booking slots available at {RESTAURANT_NAME}!")
-                open_url()
+                speak(f"{'Booking submitted' if booked else 'New booking slots available'} at {RESTAURANT_NAME}!")
+                if not booked:
+                    open_url()
                 notify_whatsapp(
-                    f"OTSUKA: {len(new_slots)} new booking slot(s) available! Book now: {BOOKING_URL}",
+                    f"OTSUKA: {'BOOKED! Check email for confirmation.' if booked else f'{len(new_slots)} new slot(s) available! Book now: {BOOKING_URL}'}",
                 )
             elif new_slots and first_run:
                 print(f"  Currently available slots (baseline):")
                 print(format_slots(available))
                 print()
                 append_log(now, available, "baseline")
+
+                if AUTO_BOOK:
+                    try:
+                        from auto_booker import auto_book
+                        booked = auto_book(available, GUESTS, MIN_BOOKING_DATE)
+                        if booked:
+                            append_log(now, available, "auto_booked", len(new_slots))
+                            notify(f"BOOKED at {RESTAURANT_NAME}!", "Booking submitted!")
+                            speak(f"Booking submitted at {RESTAURANT_NAME}!")
+                            notify_whatsapp(f"OTSUKA: BOOKED! Check email for confirmation.")
+                    except Exception as e:
+                        print(f"  [!] Auto-book error: {e}")
             else:
                 print(f"  No new slots (still {len(known_slots)} known).")
                 append_log(now, available, "no_change")
