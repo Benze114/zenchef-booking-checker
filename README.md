@@ -18,16 +18,26 @@ Built for restaurants with limited seating that release reservations on a rollin
 ## Usage
 
 ```bash
-python3 checker.py
+source env.sh && python3 checker.py
 ```
 
-To run in the background:
+To run in the background (keeps running after closing the terminal):
 
 ```bash
-nohup python3 checker.py > checker.log 2>&1 &
+source env.sh && caffeinate -i nohup python3 checker.py > checker.log 2>&1 &
 ```
 
-Stop with `Ctrl+C` (foreground) or `kill %1` (background).
+Stop with `Ctrl+C` (foreground) or `pkill -f "python3 checker.py"` (background).
+
+### Preventing sleep
+
+The script checks every few seconds during the 11:30–13:30 release window. If your Mac sleeps, it will miss new slots.
+
+- **`caffeinate -i`** prevents idle sleep while the script runs. Add `-d` to also keep the display awake: `caffeinate -di`.
+- **Screen lock** does not affect the script — only sleep does.
+- **Closing the lid** will sleep the Mac regardless. Keep it open or use `pmset` to disable lid sleep.
+- **macOS settings**: System Settings → Battery → Options → Enable "Prevent automatic sleeping when the display is off".
+- Make sure your MacBook is **plugged in** so it doesn't die mid-check.
 
 ## Configuration
 

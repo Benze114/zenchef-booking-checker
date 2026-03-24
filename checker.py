@@ -20,9 +20,9 @@ BOOKING_URL = f"https://bookings.zenchef.com/results?rid={RESTAURANT_ID}"
 API_URL = "https://bookings-middleware.zenchef.com/getAvailabilities"
 
 CHECK_INTERVAL_MINUTES = 5
-CHECK_INTERVAL_PEAK_MINUTES = 0.1  # During release window
-PEAK_START = (11, 30)  # 11:30
-PEAK_END = (13, 30)    # 13:30
+CHECK_INTERVAL_PEAK_MINUTES = 0.01  # During release window
+PEAK_START = (12, 30)  # 12:30
+PEAK_END = (13, 15)    # 13:15
 GUESTS = 2
 LOOKAHEAD_DAYS = 14
 AUTO_BOOK = True  # Automatically attempt to book when a slot appears
