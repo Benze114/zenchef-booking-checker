@@ -185,6 +185,7 @@ def main():
     print()
 
     known_slots: dict = {}
+    whatsapp_notified_slots: set = set()
     first_run = True
 
     while True:
@@ -203,9 +204,11 @@ def main():
                             new_slots[key] = True
                             known_slots[key] = True
 
+            slot_summary = format_slots(available)
+
             if new_slots and not first_run:
                 print(f"\n  *** NEW SLOTS FOUND! ***")
-                print(format_slots(available))
+                print(slot_summary)
                 print()
                 append_log(now, available, "new_slots", len(new_slots))
 
@@ -226,12 +229,9 @@ def main():
                 speak(f"{'Booking submitted' if booked else 'New booking slots available'} at {RESTAURANT_NAME}!")
                 if not booked:
                     open_url()
-                notify_whatsapp(
-                    f"OTSUKA: {'BOOKED! Check email for confirmation.' if booked else f'{len(new_slots)} new slot(s) available! Book now: {BOOKING_URL}'}",
-                )
             elif new_slots and first_run:
                 print(f"  Currently available slots (baseline):")
-                print(format_slots(available))
+                print(slot_summary)
                 print()
                 append_log(now, available, "baseline")
 
@@ -243,16 +243,29 @@ def main():
                             append_log(now, available, "auto_booked", len(new_slots))
                             notify(f"BOOKED at {RESTAURANT_NAME}!", "Booking submitted!")
                             speak(f"Booking submitted at {RESTAURANT_NAME}!")
-                            notify_whatsapp(f"OTSUKA: BOOKED! Check email for confirmation.")
                     except Exception as e:
                         print(f"  [!] Auto-book error: {e}")
             else:
                 print(f"  No new slots (still {len(known_slots)} known).")
                 append_log(now, available, "no_change")
+
+            current_slot_keys = set()
+            for day, shifts in available.items():
+                for shift_entry in shifts:
+                    for t in shift_entry["times"]:
+                        current_slot_keys.add((day, shift_entry["shift"], t))
+
+            unsent_slots = current_slot_keys - whatsapp_notified_slots
+            if unsent_slots:
+                notify_whatsapp(f"OTSUKA: Offene Slots:\n{slot_summary}\n\nBuchen: {BOOKING_URL}")
+                whatsapp_notified_slots.update(current_slot_keys)
+            else:
+                print(f"  [WhatsApp] Bereits benachrichtigt, keine neue Nachricht.")
         else:
             print(f"  No available slots found.")
             if not first_run and known_slots:
                 known_slots.clear()
+                whatsapp_notified_slots.clear()
                 print(f"  (Previously known slots cleared — they were taken.)")
                 append_log(now, {}, "slots_cleared")
             else:

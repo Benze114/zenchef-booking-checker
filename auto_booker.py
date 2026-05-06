@@ -8,6 +8,7 @@ import os
 import sys
 import time
 from datetime import datetime
+from typing import Optional
 from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 
 RESTAURANT_ID = 365906
@@ -53,7 +54,7 @@ def screenshot(page, name: str):
     print(f"  [screenshot] {path}")
 
 
-def pick_best_slot(available_times: list[str]) -> str | None:
+def pick_best_slot(available_times: list[str]) -> Optional[str]:
     """Pick the best slot from available times based on preference order."""
     for pref in PREFERRED_SLOTS:
         if pref in available_times:
